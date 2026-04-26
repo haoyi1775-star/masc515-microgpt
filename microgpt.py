@@ -16,6 +16,9 @@ def gelu(x):
 def lora(x):
     # simple low-rank adaptation
     return x + 0.01 * x
+def rope(x, pos):
+    # simple rotary embedding
+    return x * math.cos(pos) + x * math.sin(pos)
 random.seed(42) # Let there be order among chaos
 
 # Let there be a Dataset `docs`: list[str] of documents (e.g. a list of names)
@@ -171,6 +174,7 @@ for step in range(num_steps):
         token_id, target_id = tokens[pos_id], tokens[pos_id + 1]
         logits = gpt(token_id, pos_id, keys, values)
         logits = [lora(l) for l in logits]
+        logits = [rope(l, pos_id) for l in logits]
         probs = softmax(logits)
         loss_t = -probs[target_id].log()
         losses.append(loss_t)
