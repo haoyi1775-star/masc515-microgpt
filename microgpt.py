@@ -19,6 +19,17 @@ def lora(x):
 def rope(x, pos):
     # simple rotary embedding
     return x * math.cos(pos) + x * math.sin(pos)
+def expert1(x):
+    return x * 1.1
+
+def expert2(x):
+    return x * 0.9
+def moe(x):
+    # simple gating: choose expert based on value
+    if x > 0:
+        return expert1(x)
+    else:
+        return expert2(x)
 random.seed(42) # Let there be order among chaos
 
 # Let there be a Dataset `docs`: list[str] of documents (e.g. a list of names)
@@ -175,6 +186,7 @@ for step in range(num_steps):
         logits = gpt(token_id, pos_id, keys, values)
         logits = [lora(l) for l in logits]
         logits = [rope(l, pos_id) for l in logits]
+        logits = [moe(l) for l in logits]
         probs = softmax(logits)
         loss_t = -probs[target_id].log()
         losses.append(loss_t)
